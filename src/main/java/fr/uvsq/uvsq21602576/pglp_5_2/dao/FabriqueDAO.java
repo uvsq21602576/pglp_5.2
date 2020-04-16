@@ -19,7 +19,11 @@ public abstract class FabriqueDAO {
          * Pour une simulation de base de données par fichier.
          * Et sérialisation.
          */
-        FILE;
+        FILE,
+        /**
+         * Avec une base de donnée.
+         */
+        JDBC;
     }
 
     /**
@@ -54,6 +58,9 @@ public abstract class FabriqueDAO {
     public static FabriqueDAO getFabriqueDAO(final TypeDAO type) {
         if (type == TypeDAO.FILE) {
             return new FabriqueDAOFile();
+        }
+        if (type == TypeDAO.JDBC) {
+            return new FabriqueDAOJDBC();
         }
         return null;
     }

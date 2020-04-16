@@ -2,6 +2,9 @@ package fr.uvsq.uvsq21602576.pglp_5_2;
 
 import java.time.LocalDate;
 
+import fr.uvsq.uvsq21602576.pglp_5_2.dao.DAO;
+import fr.uvsq.uvsq21602576.pglp_5_2.dao.FabriqueDAO;
+
 /**
  * Singleton contenant le main.
  * @author Flora
@@ -51,12 +54,19 @@ public enum Main {
         System.out.println(a.hierachie());
         System.out.println(a.groupe());
     }
+    
+    public void runJDBC() {
+        DAO<Telephone> dao = FabriqueDAO.getFabriqueDAO(FabriqueDAO.TypeDAO.JDBC).getTelephoneDAO();
+        dao.create(new Telephone(1, "06", "info"));
+        
+    }
 
     /**
      * main.
      * @param args arguments
      */
     public static void main(final String[] args) {
-        MAIN.run();
+        //MAIN.run();
+        MAIN.runJDBC();
     }
 }
