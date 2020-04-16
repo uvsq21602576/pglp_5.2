@@ -57,8 +57,25 @@ public enum Main {
     
     public void runJDBC() {
         DAO<Telephone> dao = FabriqueDAO.getFabriqueDAO(FabriqueDAO.TypeDAO.JDBC).getTelephoneDAO();
-        dao.create(new Telephone(1, "06", "info"));
+        Telephone t1 = new Telephone(1, "06", "portable");
+        System.out.println("Telephone : " + t1.toString());
+        dao.create(t1);
         
+        Telephone t2 = dao.find("1");
+        System.out.println("Tel recupere : "+t2.toString());
+
+        t1 = new Telephone(1, "098765", "portable");
+        System.out.println("Modif : " + t1.toString());
+        dao.update(t1);
+        
+        t2 = dao.find("1");
+        System.out.println("Tel modifié recupere : "+t2.toString());
+        
+        dao.delete(t2);
+        System.out.println("Delete.");
+        
+        t2 = dao.find("1");
+        System.out.println(t2.toString());
     }
 
     /**
