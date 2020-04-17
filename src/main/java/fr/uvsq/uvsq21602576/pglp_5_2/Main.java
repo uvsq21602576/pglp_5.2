@@ -55,7 +55,7 @@ public enum Main {
         System.out.println(a.groupe());
     }
     
-    public void runJDBC() {
+    public void runJDBCTelephone() {
         DAO<Telephone> dao = FabriqueDAO.getFabriqueDAO(FabriqueDAO.TypeDAO.JDBC).getTelephoneDAO();
         Telephone t1 = new Telephone(1, "06", "portable");
         System.out.println("Telephone : " + t1.toString());
@@ -72,10 +72,41 @@ public enum Main {
         System.out.println("Tel modifié recupere : "+t2.toString());
         
         dao.delete(t2);
-        System.out.println("Delete.");
         
         t2 = dao.find("1");
-        System.out.println(t2.toString());
+        System.out.print("Delete ? ");
+        System.out.println(t2==null);
+    }
+    
+    public void runJDBCPersonnel() {
+        DAO<Personnel> dao = FabriqueDAO.getFabriqueDAO(FabriqueDAO.TypeDAO.JDBC).getPersonnelDAO();
+        Personnel p = new Personnel.Builder(1, "1", "1",
+                LocalDate.of(2000, 01, 05),
+                new Telephone(2, "06...", "portable"))
+                .addNumero(new Telephone(3, "05..", "fixe"))
+                .build();
+        System.out.println("Personnel : " + p.toString());
+        dao.create(p);
+        
+        Personnel p2 = dao.find("1");
+        System.out.println("Personnel récupéré : " + p2.toString());
+        
+        Personnel p3 = new Personnel.Builder(1, "1", "111",
+                LocalDate.of(2008, 01, 05),
+                new Telephone(2, "06...", "poable"))
+                .addNumero(new Telephone(5, "07..", "fixe"))
+                .build();
+        System.out.println("Personnel modif : " + p3.toString());
+        dao.update(p3);
+        
+        Personnel p4 = dao.find("1");
+        System.out.println("Personnel modif récupéré : " + p4.toString());
+
+        dao.delete(p4);
+        
+        p2 = dao.find("1");
+        System.out.println("Delete ? ");
+        System.out.println(p2==null);
     }
 
     /**
@@ -84,6 +115,7 @@ public enum Main {
      */
     public static void main(final String[] args) {
         //MAIN.run();
-        MAIN.runJDBC();
+        //MAIN.runJDBCTelephone();
+        MAIN.runJDBCPersonnel();
     }
 }
