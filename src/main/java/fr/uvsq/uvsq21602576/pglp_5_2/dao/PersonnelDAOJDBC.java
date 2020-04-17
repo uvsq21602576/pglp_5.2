@@ -1,6 +1,5 @@
 package fr.uvsq.uvsq21602576.pglp_5_2.dao;
 
-import java.awt.font.TextAttribute;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -10,7 +9,6 @@ import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
-import org.apache.derby.impl.sql.compile.ParserImpl;
 import org.apache.derby.shared.common.error.DerbySQLIntegrityConstraintViolationException;
 
 import fr.uvsq.uvsq21602576.pglp_5_2.Personnel;
@@ -78,54 +76,42 @@ public class PersonnelDAOJDBC extends DAO<Personnel> {
         }
     }
 
+    static void insert(Personnel obj, Connection conn) throws SQLException {
+        Statement stmt = null;
+        stmt = conn.createStatement();
+
+        //Insertion personnel
+        stmt.executeUpdate("insert into personnel values (" + obj.getId()
+        + ", '" + obj.getNom() + "', '" + obj.getPrenom() + "', '"
+        + obj.getDateNaissance().toString() + "', '"
+        + obj.getFonction() + "')");
+
+        //Insertion telephones
+        String sqlPossede = "insert into possede values ";
+        for (Telephone t : obj.getNumeros()) {
+            try {
+                TelephoneDAOJDBC.insert(t, conn);
+            } catch (DerbySQLIntegrityConstraintViolationException e) {
+                System.err.println(e.getMessage());
+            }
+            sqlPossede = sqlPossede
+                    .concat("(" + obj.getId() + ", " + t.getId() + "),");
+        }
+        sqlPossede = sqlPossede.substring(0, sqlPossede.length() - 1);
+
+        stmt.executeUpdate(sqlPossede);
+    }
+
     @Override
     public Personnel create(Personnel obj) {
-        Statement stmt = null;
-        try {
-            stmt = connection.createStatement();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
-
         try {
             createTables(connection);
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
         }
-
         try {
-            stmt.executeUpdate("insert into personnel values (" + obj.getId()
-                    + ", '" + obj.getNom() + "', '" + obj.getPrenom() + "', '"
-                    + obj.getDateNaissance().toString() + "', '"
-                    + obj.getFonction() + "')");
-        } catch (DerbySQLIntegrityConstraintViolationException e) {
-            System.err.println(e.getMessage());
-            return null;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
-
-        String sqlPossede = "insert into possede values ";
-        for (Telephone t : obj.getNumeros()) {
-            try {
-                TelephoneDAOJDBC.insert(t, connection);
-                sqlPossede = sqlPossede
-                        .concat("(" + obj.getId() + ", " + t.getId() + "),");
-            } catch (DerbySQLIntegrityConstraintViolationException e) {
-                System.err.println(e.getMessage());
-                return null;
-            } catch (SQLException e) {
-                e.printStackTrace();
-                return null;
-            }
-        }
-        sqlPossede = sqlPossede.substring(0, sqlPossede.length() - 1);
-
-        try {
-            stmt.executeUpdate(sqlPossede);
+            insert(obj, connection);
         } catch (DerbySQLIntegrityConstraintViolationException e) {
             System.err.println(e.getMessage());
             return null;
@@ -136,121 +122,87 @@ public class PersonnelDAOJDBC extends DAO<Personnel> {
         return obj;
     }
 
-    @Override
-    public Personnel find(String id) {
+    static Personnel read(int idPersonnel, Connection conn) throws SQLException {
         Statement stmt = null;
-        try {
-            stmt = connection.createStatement();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
+        stmt = conn.createStatement();
 
         ResultSet rs = null;
-        try {
-            rs = stmt.executeQuery("Select id_telephone from possede "
-                    + "WHERE id_personnel = " + id);
-        } catch (SQLException e2) {
-            e2.printStackTrace();
-            return null;
-        }
+        rs = stmt.executeQuery("Select id_telephone from possede "
+                + "WHERE id_personnel = " + idPersonnel);
         ArrayList<Integer> idTelephones = new ArrayList<>();
-        try {
-            while (rs.next()) {
-                idTelephones.add(rs.getInt("id_telephone"));
-            }
-        } catch (SQLException e2) {
-            e2.printStackTrace();
+        while (rs.next()) {
+            idTelephones.add(rs.getInt("id_telephone"));
         }
-
         ArrayList<Telephone> telephones = null;
-        try {
-            telephones = TelephoneDAOJDBC.findAll(idTelephones, connection);
-        } catch (SQLException e1) {
-            e1.printStackTrace();
-            return null;
-        }
-
+        telephones = TelephoneDAOJDBC.findAll(idTelephones, conn);
         if (telephones.isEmpty()) {
             System.err.println(
-                    "No telephone associated with personnel of id " + id);
+                    "No telephone associated with personnel of id " + idPersonnel);
             return null;
         }
-
-        rs = null;
-        try {
-            rs = stmt.executeQuery(
-                    "SELECT * FROM personnel " + "WHERE id = " + id);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
-
-        try {
-            if (rs != null && rs.next()) {
-                String[] partDate = rs.getString("dateNaissance").split("-");
-                Personnel.Builder pBuilder = new Personnel.Builder(
-                        rs.getInt("id"), rs.getString("nom"),
-                        rs.getString("prenom"),
-                        LocalDate.of(Integer.parseInt(partDate[0]),
-                                Integer.parseInt(partDate[1]),
-                                Integer.parseInt(partDate[2])),
-                        telephones.remove(0));
-                for (Telephone t : telephones) {
-                    pBuilder.addNumero(t);
-                }
-                return pBuilder.build();
-            } else {
-                System.err.println("No personnel found with id " + id);
+        rs = stmt.executeQuery(
+                "SELECT * FROM personnel " + "WHERE id = " + idPersonnel);
+        if (rs != null && rs.next()) {
+            String[] partDate = rs.getString("dateNaissance").split("-");
+            Personnel.Builder pBuilder = new Personnel.Builder(
+                    rs.getInt("id"), rs.getString("nom"),
+                    rs.getString("prenom"),
+                    LocalDate.of(Integer.parseInt(partDate[0]),
+                            Integer.parseInt(partDate[1]),
+                            Integer.parseInt(partDate[2])),
+                    telephones.remove(0));
+            for (Telephone t : telephones) {
+                pBuilder.addNumero(t);
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+            return pBuilder.build();
+        } else {
+            System.err.println("No personnel found with id " + idPersonnel);
         }
         return null;
     }
 
     @Override
-    public Personnel update(Personnel obj) {
+    public Personnel find(String id) {
         try {
-            TelephoneDAOJDBC.updateAll(obj.getNumeros(), connection);
+            return read(Integer.parseInt(id), connection);
         } catch (SQLException e) {
             e.printStackTrace();
-            return null;
         }
-
+        return null;
+    }
+    
+    static boolean modify(Personnel obj, Connection conn) throws SQLException {
+        TelephoneDAOJDBC.updateAll(obj.getNumeros(), conn);
         Statement stmt = null;
-        try {
-            stmt = connection.createStatement();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
+        stmt = conn.createStatement();
+        int existPersonnel = stmt.executeUpdate("Update personnel SET " + "nom = '"
+                + obj.getNom() + "', " + "prenom = '" + obj.getPrenom()
+                + "', " + "dateNaissance = '"
+                + obj.getDateNaissance().toString() + "', " + "fonction = '"
+                + obj.getFonction() + "' " + "WHERE id = " + obj.getId());
+        if(existPersonnel<1) {
+            return false;
         }
-        try {
-            stmt.executeUpdate("Update personnel SET " + "nom = '"
-                    + obj.getNom() + "', " + "prenom = '" + obj.getPrenom()
-                    + "', " + "dateNaissance = '"
-                    + obj.getDateNaissance().toString() + "', " + "fonction = '"
-                    + obj.getFonction() + "' " + "WHERE id = " + obj.getId());
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
-
         String sqlPossede = "insert into possede values ";
         for (Telephone t : obj.getNumeros()) {
             sqlPossede = sqlPossede
                     .concat("(" + obj.getId() + ", " + t.getId() + "),");
         }
         sqlPossede = sqlPossede.substring(0, sqlPossede.length() - 1);
+        stmt.executeUpdate(
+                "Delete from possede WHERE id_personnel = " + obj.getId());
+        stmt.executeUpdate(sqlPossede);
+        return true;
+    }
+
+    @Override
+    public Personnel update(Personnel obj) {
         try {
-            stmt.executeUpdate(
-                    "Delete from possede WHERE id_personnel = " + obj.getId());
-            stmt.executeUpdate(sqlPossede);
+            modify(obj, connection);
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
         }
-
         return obj;
     }
 

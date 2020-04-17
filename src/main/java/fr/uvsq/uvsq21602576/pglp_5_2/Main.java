@@ -108,6 +108,48 @@ public enum Main {
         System.out.println("Delete ? ");
         System.out.println(p2==null);
     }
+    
+    public void runJDBCGroupe() {
+        Personnel p = new Personnel.Builder(1, "1", "1",
+                LocalDate.of(2000, 01, 05),
+                new Telephone(1, "06...", "portable")).build();
+        Personnel p2 = new Personnel.Builder(2, "1", "2",
+                LocalDate.of(2000, 01, 05),
+                new Telephone(2, "05...", "portable"))
+                .addNumero(new Telephone(3, "04...", "pole"))
+                .build();
+        Groupe g = new Groupe(1, "G1");
+        g.add(p);
+        g.add(p2);
+        System.out.println("Groupe : " + g.hierarchie());
+        DAO<Groupe> dao = FabriqueDAO.getFabriqueDAO(FabriqueDAO.TypeDAO.JDBC).getGroupeDAO();
+        dao.create(g);
+        
+        Groupe g1 = dao.find("1");
+        System.out.println("Groupe récupéré : " + g1.hierarchie());
+        
+        Personnel p3 = new Personnel.Builder(3, "1", "1",
+                LocalDate.of(2000, 01, 05),
+                new Telephone(1, "0656.", "portable")).build();
+        Personnel p4 = new Personnel.Builder(2, "1", "2",
+                LocalDate.of(2000, 01, 05),
+                new Telephone(2, "055..", "portable"))
+                .addNumero(new Telephone(3, "04...", "pole"))
+                .build();
+        Groupe g2 = new Groupe(1, "G1modif");
+        g2.add(p3);
+        g2.add(p4);
+        System.out.println("Groupe modif : " + g2.hierarchie());
+        
+        dao.update(g2);
+        Groupe g3 = dao.find("1");
+        System.out.println("Groupe modif récupéré : " + g3.hierarchie());
+        
+        dao.delete(g3);
+        g2 = dao.find("1");
+        System.out.println("Delete ? ");
+        System.out.println(g2==null);
+    }
 
     /**
      * main.
@@ -116,6 +158,7 @@ public enum Main {
     public static void main(final String[] args) {
         //MAIN.run();
         //MAIN.runJDBCTelephone();
-        MAIN.runJDBCPersonnel();
+        //MAIN.runJDBCPersonnel();
+        MAIN.runJDBCGroupe();
     }
 }

@@ -77,23 +77,27 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
         stmt = conn.createStatement();
         ResultSet rs = null;
         ArrayList<Telephone> telephones = new ArrayList<Telephone>();
-        
+
         for(int i : id) {
-            rs = stmt.executeQuery(
-                    "SELECT * FROM telephone " + "WHERE id = " + i);
-            if (rs.next()) {
-                telephones.add(new Telephone(rs.getInt("id"),
-                        rs.getString("numero"), rs.getString("information")));
-            }
+            try {
+                rs = stmt.executeQuery(
+                        "SELECT * FROM telephone " + "WHERE id = " + i);
+                if (rs.next()) {
+                    telephones.add(new Telephone(rs.getInt("id"),
+                            rs.getString("numero"), rs.getString("information")));
+                }
+            } catch (DerbySQLIntegrityConstraintViolationException e) {
+                System.err.println(e.getMessage());
+            } 
         }
-        
+
         return telephones;
     }
-    
+
     static void updateAll(List<Telephone> list, Connection conn) throws SQLException {
         Statement stmt = null;
         stmt = conn.createStatement();
-        
+
         for(Telephone t : list) {
             int nb = stmt.executeUpdate("Update telephone SET " + "numero = '"
                     + t.getNumero() + "', " + "information = '"
@@ -104,8 +108,6 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
             }
         }
     }
-    
-    
 
     /**
      * Pour la création.
@@ -115,14 +117,6 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
      */
     @Override
     public Telephone create(Telephone obj) {
-        Statement stmt = null;
-        try {
-            stmt = connection.createStatement();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
-
         try {
             createTable(connection);
         } catch (SQLException e) {

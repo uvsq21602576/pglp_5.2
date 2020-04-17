@@ -51,6 +51,14 @@ public class Groupe implements Composant, IterableComposant, Serializable {
     public Composant get(final int index) {
         return composantFils.get(index);
     }
+    
+    /**
+     * Retourne le nom.
+     * @return Nom du groupe
+     */
+    public String getNom() {
+        return this.nom;
+    }
 
     /**
      * Retourne l'identifiant.
