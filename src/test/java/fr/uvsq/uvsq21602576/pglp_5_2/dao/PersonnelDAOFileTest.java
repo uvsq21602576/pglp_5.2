@@ -47,8 +47,8 @@ public class PersonnelDAOFileTest {
         do {
             ((FabriqueDAOFile) fabrique)
                     .setDossierDB("databaseFileForTestUniquely" + i + "\\");
-            nomDossierFabriqueTest = ((FabriqueDAOFile) fabrique)
-                    .getDossierDB();
+            nomDossierFabriqueTest =
+                    ((FabriqueDAOFile) fabrique).getDossierDB();
             i++;
         } while (new File(nomDossierFabriqueTest).exists());
 
@@ -100,8 +100,8 @@ public class PersonnelDAOFileTest {
                 new Telephone(1, "06...", "portable")).build();
         daoP.create(p);
 
-        String nomFichier = nomDossierFabriqueTest + "Personnel\\" + p.getId()
-                + ".ser";
+        String nomFichier =
+                nomDossierFabriqueTest + "Personnel\\" + p.getId() + ".ser";
         File f = new File(nomFichier);
         assertTrue(f.exists());
         Personnel observed = deserialize(nomFichier);
@@ -165,8 +165,8 @@ public class PersonnelDAOFileTest {
         daoP.create(p);
 
         daoP.delete(p);
-        String nomFichier = nomDossierFabriqueTest + "Personnel\\" + p.getId()
-                + ".ser";
+        String nomFichier =
+                nomDossierFabriqueTest + "Personnel\\" + p.getId() + ".ser";
         File f = new File(nomFichier);
         assertFalse(f.exists());
     }
@@ -185,8 +185,8 @@ public class PersonnelDAOFileTest {
      */
     private Personnel deserialize(final String nomFichier)
             throws FileNotFoundException, IOException, ClassNotFoundException {
-        try (ObjectInputStream in = new ObjectInputStream(
-                new BufferedInputStream(
+        try (ObjectInputStream in =
+                new ObjectInputStream(new BufferedInputStream(
                         new FileInputStream(new File(nomFichier))))) {
             Object o = in.readObject();
             if (o instanceof Personnel) {

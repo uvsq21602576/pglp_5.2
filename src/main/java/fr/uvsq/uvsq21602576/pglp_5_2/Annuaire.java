@@ -123,11 +123,10 @@ public class Annuaire implements Serializable {
 
     /**
      * Retourne la racine.
-     * @return  Composant racine
+     * @return Composant racine
      */
     public Composant getRacine() {
         return racine;
     }
-    
-    
+
 }

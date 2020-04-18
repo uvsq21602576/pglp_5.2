@@ -15,14 +15,15 @@ import fr.uvsq.uvsq21602576.pglp_5_2.Telephone;
 
 /**
  * Classe DAO pour Telephone.
- * Marche avec une base de donnée.
+ * Marche avec la base de donnée intégré, présente à l'url
+ * jdbc:derby:donneesPourDB\\jdbcDB.
  * @author Flora
  */
 public class TelephoneDAOJDBC extends DAO<Telephone> {
     /**
      * Connection avec la base de données.
      */
-    Connection connection;
+    private Connection connection;
 
     /**
      * Constructeur.
@@ -40,76 +41,56 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
 
     /**
      * Teste si la table name existe.
-     * @return true si ell existe, false sinon
+     * Dans la base de donnée connecté à conn.
+     * @param name Nom de la table
+     * @param conn Connexion avec la base de donnée.
+     * @return true si elle existe, false sinon
      * @throws SQLException En cas d'erreur de connection avec la BD.
      */
-    private static boolean tableExists(String name, Connection conn) throws SQLException {
+    private static boolean tableExists(final String name, final Connection conn)
+            throws SQLException {
         DatabaseMetaData dbmd = conn.getMetaData();
-        ResultSet rs = dbmd.getTables(null, null, "telephone".toUpperCase(),
-                null);
+        ResultSet rs =
+                dbmd.getTables(null, null, "telephone".toUpperCase(), null);
         if (rs.next()) {
             return true;
         }
         return false;
     }
 
-    static void createTable(Connection conn) throws SQLException {
+    /**
+     * Crée les tables utiles pour le Telephone.
+     * C'est à dire : Telephone.
+     * @param conn Connexion à la base de donnée
+     * @throws SQLException En cas de problème lors de l'éxécution des requetes
+     *         sql.
+     */
+    static void createTable(final Connection conn) throws SQLException {
         Statement stmt = null;
         stmt = conn.createStatement();
         if (!tableExists("telephone", conn)) {
             stmt.execute(
-                    "Create table telephone (id int primary key, numero varchar(30) unique not null,"
+                    "Create table telephone "
+                    + "(id int primary key, "
+                    + "numero varchar(30) unique not null,"
                             + "information varchar(30))");
         }
     }
 
-    static void insert(Telephone obj, Connection conn)
+    /**
+     * Insert l'objet telephone dans la base de donnée.
+     * Via la connexion conn.
+     * @param obj Telephone à insérer
+     * @param conn Connexion à la base de donnée
+     * @throws SQLException En cas d'erreur dues aux requetes sql.
+     */
+    static void insert(final Telephone obj, final Connection conn)
             throws SQLException {
         Statement stmt = null;
         stmt = conn.createStatement();
         stmt.executeUpdate("insert into telephone values (" + obj.getId()
-        + ", '" + obj.getNumero() + "', '" + obj.getInformation()
-        + "')");
-    }
-
-    static ArrayList<Telephone> findAll(ArrayList<Integer> id, Connection conn) throws SQLException {
-        Statement stmt = null;
-        stmt = conn.createStatement();
-        ResultSet rs = null;
-        ArrayList<Telephone> telephones = new ArrayList<Telephone>();
-
-        for(int i : id) {
-            try {
-                rs = stmt.executeQuery(
-                        "SELECT * FROM telephone " + "WHERE id = " + i);
-                if (rs.next()) {
-                    telephones.add(new Telephone(rs.getInt("id"),
-                            rs.getString("numero"), rs.getString("information")));
-                }
-            } catch (DerbySQLIntegrityConstraintViolationException e) {
-                System.err.println(e.getMessage());
-            } 
-        }
-
-        return telephones;
-    }
-
-    static void updateAll(List<Telephone> list, Connection conn) throws SQLException {
-        Statement stmt = null;
-        stmt = conn.createStatement();
-
-        for(Telephone t : list) {
-
-            ResultSet rs = stmt.executeQuery("SELECT * FROM telephone WHERE id = " + t.getId());
-            if(!rs.next()) {
-                insert(t, conn);
-            } else {
-                stmt.executeUpdate("Update telephone SET " + "numero = '"
-                    + t.getNumero() + "', " + "information = '"
-                    + t.getInformation() + "' " 
-                    + "WHERE id = " + t.getId());
-            }
-        }
+                + ", '" + obj.getNumero() + "', '" + obj.getInformation()
+                + "')");
     }
 
     /**
@@ -119,7 +100,7 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
      * @return Telephone créé, ou null en cas d'erreur
      */
     @Override
-    public Telephone create(Telephone obj) {
+    public Telephone create(final Telephone obj) {
         try {
             createTable(connection);
         } catch (SQLException e) {
@@ -141,6 +122,39 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
     }
 
     /**
+     * Recherche et renvoie uns liste de telephones.
+     * Identifié gra^ce à une liste d'identifiant id.
+     * Via la connexion à la base de données, conn.
+     * @param id Liste d'identifiant de telephones
+     * @param conn Connexion à la base de données
+     * @return Liste de telephone trouvés
+     * @throws SQLException En cas d'erreur lors des requetes SQL
+     */
+    static ArrayList<Telephone> findAll(final ArrayList<Integer> id,
+            final Connection conn) throws SQLException {
+        Statement stmt = null;
+        stmt = conn.createStatement();
+        ResultSet rs = null;
+        ArrayList<Telephone> telephones = new ArrayList<Telephone>();
+
+        for (int i : id) {
+            try {
+                rs = stmt.executeQuery(
+                        "SELECT * FROM telephone " + "WHERE id = " + i);
+                if (rs.next()) {
+                    telephones.add(new Telephone(rs.getInt("id"),
+                            rs.getString("numero"),
+                            rs.getString("information")));
+                }
+            } catch (DerbySQLIntegrityConstraintViolationException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+
+        return telephones;
+    }
+
+    /**
      * Pour la recherche.
      * Retourne le telephone avec comme identifiant id,
      * présent dans la base de donnée.
@@ -148,7 +162,7 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
      * @return Telephone trouvé, ou null en cas d'erreur
      */
     @Override
-    public Telephone find(String id) {
+    public Telephone find(final String id) {
         Statement stmt = null;
         try {
             stmt = connection.createStatement();
@@ -181,13 +195,40 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
     }
 
     /**
+     * Update tous les telephones présent dans list.
+     * via la connexion à la base de donnée, conn.
+     * @param list Liste de Telephone à modifier
+     * @param conn Connexion à la base donnée
+     * @throws SQLException En cas d'erreur lors des requetes SQL.
+     */
+    static void updateAll(final List<Telephone> list, final Connection conn)
+            throws SQLException {
+        Statement stmt = null;
+        stmt = conn.createStatement();
+
+        for (Telephone t : list) {
+
+            ResultSet rs = stmt.executeQuery(
+                    "SELECT * FROM telephone WHERE id = " + t.getId());
+            if (!rs.next()) {
+                insert(t, conn);
+            } else {
+                stmt.executeUpdate(
+                        "Update telephone SET " + "numero = '" + t.getNumero()
+                                + "', " + "information = '" + t.getInformation()
+                                + "' " + "WHERE id = " + t.getId());
+            }
+        }
+    }
+
+    /**
      * Pour la modification.
      * Met à jour le telephone (repéré par son id) dans la BD.
      * @param obj Telephone modifié à mettre à jour
      * @return Telephone modifié, ou null en cas d'erreur
      */
     @Override
-    public Telephone update(Telephone obj) {
+    public Telephone update(final Telephone obj) {
         Statement stmt = null;
         try {
             stmt = connection.createStatement();
@@ -214,7 +255,7 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
      * @param obj Telephone à supprimer
      */
     @Override
-    public void delete(Telephone obj) {
+    public void delete(final Telephone obj) {
         Statement stmt = null;
         try {
             stmt = connection.createStatement();
@@ -224,8 +265,9 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
         }
 
         try {
-            if(tableExists("possede", connection)) {
-                stmt.executeUpdate("DELETE from possede where id_telephone = " + obj.getId());
+            if (tableExists("possede", connection)) {
+                stmt.executeUpdate("DELETE from possede where id_telephone = "
+                        + obj.getId());
             }
         } catch (SQLException e1) {
             e1.printStackTrace();
@@ -233,7 +275,8 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
 
         try {
             System.out.println(stmt.executeUpdate(
-                    "Delete from telephone " + "WHERE id = " + obj.getId()) + " telephones deleted.");
+                    "Delete from telephone " + "WHERE id = " + obj.getId())
+                    + " telephones deleted.");
         } catch (SQLException e) {
             e.printStackTrace();
             return;

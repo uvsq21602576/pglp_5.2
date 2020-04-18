@@ -36,9 +36,9 @@ public class GroupeTest {
     @Test
     public void addTestPersonnel() {
         Groupe g = new Groupe(1, "G");
-        Personnel p = new Personnel.Builder(1, "1", "1",
-                LocalDate.of(2000, 01, 05),
-                new Telephone(1, "06...", "portable")).build();
+        Personnel p =
+                new Personnel.Builder(1, "1", "1", LocalDate.of(2000, 01, 05),
+                        new Telephone(1, "06...", "portable")).build();
         g.add(p);
         assertEquals(1, g.size());
         assertEquals(p, g.get(0));
@@ -63,9 +63,9 @@ public class GroupeTest {
     @Test
     public void removeTestPersonnel() {
         Groupe g = new Groupe(1, "G");
-        Personnel p = new Personnel.Builder(1, "1", "1",
-                LocalDate.of(2000, 01, 05),
-                new Telephone(1, "06...", "portable")).build();
+        Personnel p =
+                new Personnel.Builder(1, "1", "1", LocalDate.of(2000, 01, 05),
+                        new Telephone(1, "06...", "portable")).build();
         g.add(p);
         Composant g2 = g.remove(0);
         assertTrue(g2 instanceof Personnel);
@@ -79,9 +79,9 @@ public class GroupeTest {
     @Test
     public void equalsTrueTest() {
         Groupe g = new Groupe(1, "G");
-        Personnel p = new Personnel.Builder(1, "1", "1",
-                LocalDate.of(2000, 01, 05),
-                new Telephone(1, "06...", "portable")).build();
+        Personnel p =
+                new Personnel.Builder(1, "1", "1", LocalDate.of(2000, 01, 05),
+                        new Telephone(1, "06...", "portable")).build();
         g.add(p);
         Groupe g2 = new Groupe(2, "G");
         g2.add(p);
@@ -94,15 +94,15 @@ public class GroupeTest {
     @Test
     public void equalsFalseTest() {
         Groupe g = new Groupe(1, "G");
-        Personnel p = new Personnel.Builder(1, "1", "1",
-                LocalDate.of(2000, 01, 05),
-                new Telephone(1, "06...", "portable")).build();
+        Personnel p =
+                new Personnel.Builder(1, "1", "1", LocalDate.of(2000, 01, 05),
+                        new Telephone(1, "06...", "portable")).build();
         g.add(p);
         Groupe g2 = new Groupe(2, "G");
         g2.add(p);
-        Personnel p2 = new Personnel.Builder(2, "2", "1",
-                LocalDate.of(2000, 01, 05),
-                new Telephone(2, "06...", "portable")).build();
+        Personnel p2 =
+                new Personnel.Builder(2, "2", "1", LocalDate.of(2000, 01, 05),
+                        new Telephone(2, "06...", "portable")).build();
         g2.add(p2);
         assertFalse(g.equals(g2));
     }
@@ -116,9 +116,9 @@ public class GroupeTest {
     @Test
     public void serialisationTest() throws IOException, ClassNotFoundException {
         Groupe g = new Groupe(1, "G");
-        Personnel p = new Personnel.Builder(1, "1", "1",
-                LocalDate.of(2000, 01, 05),
-                new Telephone(1, "06...", "portable")).build();
+        Personnel p =
+                new Personnel.Builder(1, "1", "1", LocalDate.of(2000, 01, 05),
+                        new Telephone(1, "06...", "portable")).build();
         g.add(p);
         ByteArrayOutputStream outBuff = new ByteArrayOutputStream();
         ObjectOutputStream out = new ObjectOutputStream(outBuff);

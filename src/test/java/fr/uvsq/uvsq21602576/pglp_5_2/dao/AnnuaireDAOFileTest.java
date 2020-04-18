@@ -49,8 +49,8 @@ public class AnnuaireDAOFileTest {
         do {
             ((FabriqueDAOFile) fabrique)
                     .setDossierDB("databaseFileForTestUniquely" + i + "\\");
-            nomDossierFabriqueTest = ((FabriqueDAOFile) fabrique)
-                    .getDossierDB();
+            nomDossierFabriqueTest =
+                    ((FabriqueDAOFile) fabrique).getDossierDB();
             i++;
         } while (new File(nomDossierFabriqueTest).exists());
 
@@ -97,20 +97,20 @@ public class AnnuaireDAOFileTest {
     @Test
     public void createTest()
             throws FileNotFoundException, ClassNotFoundException, IOException {
-        Personnel p = new Personnel.Builder(1, "1", "1",
-                LocalDate.of(2000, 01, 05),
-                new Telephone(1, "06...", "portable")).build();
-        Personnel p2 = new Personnel.Builder(2, "1", "2",
-                LocalDate.of(2000, 01, 05),
-                new Telephone(2, "06...", "portable")).build();
+        Personnel p =
+                new Personnel.Builder(1, "1", "1", LocalDate.of(2000, 01, 05),
+                        new Telephone(1, "06...", "portable")).build();
+        Personnel p2 =
+                new Personnel.Builder(2, "1", "2", LocalDate.of(2000, 01, 05),
+                        new Telephone(2, "06...", "portable")).build();
         Groupe g1 = new Groupe(1, "G");
         g1.add(p);
         g1.add(p2);
         Annuaire a = new Annuaire(1, g1);
         daoG.create(a);
 
-        String nomFichier = nomDossierFabriqueTest + "Annuaire\\" + a.getId()
-                + ".ser";
+        String nomFichier =
+                nomDossierFabriqueTest + "Annuaire\\" + a.getId() + ".ser";
         File f = new File(nomFichier);
         assertTrue(f.exists());
         Annuaire observed = deserialize(nomFichier);
@@ -123,12 +123,12 @@ public class AnnuaireDAOFileTest {
      */
     @Test
     public void findTest() {
-        Personnel p = new Personnel.Builder(1, "1", "1",
-                LocalDate.of(2000, 01, 05),
-                new Telephone(1, "06...", "portable")).build();
-        Personnel p2 = new Personnel.Builder(2, "1", "2",
-                LocalDate.of(2000, 01, 05),
-                new Telephone(2, "06...", "portable")).build();
+        Personnel p =
+                new Personnel.Builder(1, "1", "1", LocalDate.of(2000, 01, 05),
+                        new Telephone(1, "06...", "portable")).build();
+        Personnel p2 =
+                new Personnel.Builder(2, "1", "2", LocalDate.of(2000, 01, 05),
+                        new Telephone(2, "06...", "portable")).build();
         Groupe g1 = new Groupe(1, "G");
         g1.add(p);
         g1.add(p2);
@@ -151,24 +151,24 @@ public class AnnuaireDAOFileTest {
     @Test
     public void updateTest()
             throws FileNotFoundException, ClassNotFoundException, IOException {
-        Personnel p = new Personnel.Builder(1, "1", "1",
-                LocalDate.of(2000, 01, 05),
-                new Telephone(1, "06...", "portable")).build();
-        Personnel p2 = new Personnel.Builder(2, "1", "2",
-                LocalDate.of(2000, 01, 05),
-                new Telephone(2, "06...", "portable")).build();
+        Personnel p =
+                new Personnel.Builder(1, "1", "1", LocalDate.of(2000, 01, 05),
+                        new Telephone(1, "06...", "portable")).build();
+        Personnel p2 =
+                new Personnel.Builder(2, "1", "2", LocalDate.of(2000, 01, 05),
+                        new Telephone(2, "06...", "portable")).build();
         Groupe g1 = new Groupe(1, "G");
         g1.add(p);
         g1.add(p2);
         Annuaire a = new Annuaire(3, g1);
         daoG.create(a);
 
-        Personnel updateP = new Personnel.Builder(1, "1", "1",
-                LocalDate.of(2000, 01, 05),
-                new Telephone(1, "06...", "portable")).build();
-        Personnel updateP2 = new Personnel.Builder(2, "1", "2",
-                LocalDate.of(2000, 01, 05),
-                new Telephone(2, "06...", "portable")).build();
+        Personnel updateP =
+                new Personnel.Builder(1, "1", "1", LocalDate.of(2000, 01, 05),
+                        new Telephone(1, "06...", "portable")).build();
+        Personnel updateP2 =
+                new Personnel.Builder(2, "1", "2", LocalDate.of(2000, 01, 05),
+                        new Telephone(2, "06...", "portable")).build();
         Groupe updateG1 = new Groupe(1, "G");
         updateG1.add(updateP);
         updateG1.add(updateP2);
@@ -189,12 +189,12 @@ public class AnnuaireDAOFileTest {
      */
     @Test
     public void deleteTest() {
-        Personnel p = new Personnel.Builder(1, "1", "1",
-                LocalDate.of(2000, 01, 05),
-                new Telephone(1, "06...", "portable")).build();
-        Personnel p2 = new Personnel.Builder(2, "1", "2",
-                LocalDate.of(2000, 01, 05),
-                new Telephone(2, "06...", "portable")).build();
+        Personnel p =
+                new Personnel.Builder(1, "1", "1", LocalDate.of(2000, 01, 05),
+                        new Telephone(1, "06...", "portable")).build();
+        Personnel p2 =
+                new Personnel.Builder(2, "1", "2", LocalDate.of(2000, 01, 05),
+                        new Telephone(2, "06...", "portable")).build();
         Groupe g1 = new Groupe(1, "G");
         g1.add(p);
         g1.add(p2);
@@ -202,8 +202,8 @@ public class AnnuaireDAOFileTest {
         daoG.create(a);
 
         daoG.delete(a);
-        String nomFichier = nomDossierFabriqueTest + "Annuaire\\" + a.getId()
-                + ".ser";
+        String nomFichier =
+                nomDossierFabriqueTest + "Annuaire\\" + a.getId() + ".ser";
         File f = new File(nomFichier);
         assertFalse(f.exists());
     }
@@ -222,8 +222,8 @@ public class AnnuaireDAOFileTest {
      */
     private Annuaire deserialize(final String nomFichier)
             throws FileNotFoundException, IOException, ClassNotFoundException {
-        try (ObjectInputStream in = new ObjectInputStream(
-                new BufferedInputStream(
+        try (ObjectInputStream in =
+                new ObjectInputStream(new BufferedInputStream(
                         new FileInputStream(new File(nomFichier))))) {
             Object o = in.readObject();
             if (o instanceof Annuaire) {

@@ -48,8 +48,8 @@ public class GroupeDAOFileTest {
         do {
             ((FabriqueDAOFile) fabrique)
                     .setDossierDB("databaseFileForTestUniquely" + i + "\\");
-            nomDossierFabriqueTest = ((FabriqueDAOFile) fabrique)
-                    .getDossierDB();
+            nomDossierFabriqueTest =
+                    ((FabriqueDAOFile) fabrique).getDossierDB();
             i++;
         } while (new File(nomDossierFabriqueTest).exists());
 
@@ -97,14 +97,14 @@ public class GroupeDAOFileTest {
     public void createTest()
             throws FileNotFoundException, ClassNotFoundException, IOException {
         Groupe g = new Groupe(1, "G");
-        Personnel p = new Personnel.Builder(1, "1", "1",
-                LocalDate.of(2000, 01, 05),
-                new Telephone(1, "06...", "portable")).build();
+        Personnel p =
+                new Personnel.Builder(1, "1", "1", LocalDate.of(2000, 01, 05),
+                        new Telephone(1, "06...", "portable")).build();
         g.add(p);
         daoG.create(g);
 
-        String nomFichier = nomDossierFabriqueTest + "Groupe\\" + g.getId()
-                + ".ser";
+        String nomFichier =
+                nomDossierFabriqueTest + "Groupe\\" + g.getId() + ".ser";
         File f = new File(nomFichier);
         assertTrue(f.exists());
         Groupe observed = deserialize(nomFichier);
@@ -118,9 +118,9 @@ public class GroupeDAOFileTest {
     @Test
     public void findTest() {
         Groupe g = new Groupe(2, "G");
-        Personnel p = new Personnel.Builder(1, "1", "1",
-                LocalDate.of(2000, 01, 05),
-                new Telephone(1, "06...", "portable")).build();
+        Personnel p =
+                new Personnel.Builder(1, "1", "1", LocalDate.of(2000, 01, 05),
+                        new Telephone(1, "06...", "portable")).build();
         g.add(p);
         daoG.create(g);
 
@@ -141,21 +141,21 @@ public class GroupeDAOFileTest {
     public void updateTest()
             throws FileNotFoundException, ClassNotFoundException, IOException {
         Groupe g = new Groupe(3, "G");
-        Personnel p1 = new Personnel.Builder(1, "1", "1",
-                LocalDate.of(2000, 01, 05),
-                new Telephone(1, "06...", "portable")).build();
+        Personnel p1 =
+                new Personnel.Builder(1, "1", "1", LocalDate.of(2000, 01, 05),
+                        new Telephone(1, "06...", "portable")).build();
         g.add(p1);
         daoG.create(g);
 
         Groupe updateG = new Groupe(3, "G");
-        Personnel updateP = new Personnel.Builder(1, "1", "1",
-                LocalDate.of(2000, 01, 05),
-                new Telephone(1, "06...", "port    able")).build();
+        Personnel updateP =
+                new Personnel.Builder(1, "1", "1", LocalDate.of(2000, 01, 05),
+                        new Telephone(1, "06...", "port    able")).build();
         g.add(updateP);
         daoG.update(updateG);
 
-        String nomFichier = nomDossierFabriqueTest + "Groupe\\"
-                + updateG.getId() + ".ser";
+        String nomFichier =
+                nomDossierFabriqueTest + "Groupe\\" + updateG.getId() + ".ser";
         File f = new File(nomFichier);
         assertTrue(f.exists());
         Groupe observed = deserialize(nomFichier);
@@ -169,15 +169,15 @@ public class GroupeDAOFileTest {
     @Test
     public void deleteTest() {
         Groupe g = new Groupe(4, "G");
-        Personnel p1 = new Personnel.Builder(1, "1", "1",
-                LocalDate.of(2000, 01, 05),
-                new Telephone(1, "06...", "portable")).build();
+        Personnel p1 =
+                new Personnel.Builder(1, "1", "1", LocalDate.of(2000, 01, 05),
+                        new Telephone(1, "06...", "portable")).build();
         g.add(p1);
         daoG.create(g);
 
         daoG.delete(g);
-        String nomFichier = nomDossierFabriqueTest + "Groupe\\" + g.getId()
-                + ".ser";
+        String nomFichier =
+                nomDossierFabriqueTest + "Groupe\\" + g.getId() + ".ser";
         File f = new File(nomFichier);
         assertFalse(f.exists());
     }
@@ -196,8 +196,8 @@ public class GroupeDAOFileTest {
      */
     private Groupe deserialize(final String nomFichier)
             throws FileNotFoundException, IOException, ClassNotFoundException {
-        try (ObjectInputStream in = new ObjectInputStream(
-                new BufferedInputStream(
+        try (ObjectInputStream in =
+                new ObjectInputStream(new BufferedInputStream(
                         new FileInputStream(new File(nomFichier))))) {
             Object o = in.readObject();
             if (o instanceof Groupe) {

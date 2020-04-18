@@ -158,8 +158,8 @@ public class TelephoneDAOFile extends DAO<Telephone> {
      */
     private void serialize(final Telephone t, final String nomFichier)
             throws FileNotFoundException, IOException {
-        try (ObjectOutputStream out = new ObjectOutputStream(
-                new BufferedOutputStream(
+        try (ObjectOutputStream out =
+                new ObjectOutputStream(new BufferedOutputStream(
                         new FileOutputStream(new File(nomFichier))))) {
             out.writeObject(t);
         }
@@ -179,8 +179,8 @@ public class TelephoneDAOFile extends DAO<Telephone> {
      */
     private Telephone deserialize(final String nomFichier)
             throws FileNotFoundException, IOException, ClassNotFoundException {
-        try (ObjectInputStream in = new ObjectInputStream(
-                new BufferedInputStream(
+        try (ObjectInputStream in =
+                new ObjectInputStream(new BufferedInputStream(
                         new FileInputStream(new File(nomFichier))))) {
             Object o = in.readObject();
             if (o instanceof Telephone) {

@@ -16,7 +16,7 @@ public class FabriqueDAOFile extends FabriqueDAO {
      * Chemin du dossier.
      * où se trouveront les fichiers contenant les instances.
      */
-    private static String dossierDB;
+    private String dossierDB;
 
     /**
      * Chemin du dossier principal.
