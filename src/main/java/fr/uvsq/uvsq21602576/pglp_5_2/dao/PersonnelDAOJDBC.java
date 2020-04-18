@@ -171,18 +171,29 @@ public class PersonnelDAOJDBC extends DAO<Personnel> {
         return null;
     }
     
-    static boolean modify(Personnel obj, Connection conn) throws SQLException {
+    static boolean modify(Personnel obj, Connection conn, boolean insert) throws SQLException {
         TelephoneDAOJDBC.updateAll(obj.getNumeros(), conn);
         Statement stmt = null;
         stmt = conn.createStatement();
-        int existPersonnel = stmt.executeUpdate("Update personnel SET " + "nom = '"
+        
+        ResultSet rs = stmt.executeQuery("SELECT * FROM personnel WHERE id = " + obj.getId());
+        if(!rs.next()) {
+            if(insert) {
+                stmt.executeUpdate("insert into personnel values (" + obj.getId()
+                + ", '" + obj.getNom() + "', '" + obj.getPrenom() + "', '"
+                + obj.getDateNaissance().toString() + "', '"
+                + obj.getFonction() + "')");
+            } else {
+                return false;
+            }
+        }
+        
+        stmt.executeUpdate("Update personnel SET " + "nom = '"
                 + obj.getNom() + "', " + "prenom = '" + obj.getPrenom()
                 + "', " + "dateNaissance = '"
                 + obj.getDateNaissance().toString() + "', " + "fonction = '"
                 + obj.getFonction() + "' " + "WHERE id = " + obj.getId());
-        if(existPersonnel<1) {
-            return false;
-        }
+        
         String sqlPossede = "insert into possede values ";
         for (Telephone t : obj.getNumeros()) {
             sqlPossede = sqlPossede
@@ -198,7 +209,9 @@ public class PersonnelDAOJDBC extends DAO<Personnel> {
     @Override
     public Personnel update(Personnel obj) {
         try {
-            modify(obj, connection);
+            if(!modify(obj, connection, false)) {
+                return null;
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
@@ -215,10 +228,20 @@ public class PersonnelDAOJDBC extends DAO<Personnel> {
             e.printStackTrace();
             return;
         }
+        
+        try {
+            if(tableExists("appartenir", connection)) {
+                stmt.executeUpdate("DELETE from appartenir where id_personnel = " + obj.getId());
+            }
+        } catch (SQLException e1) {
+            e1.printStackTrace();
+        }
+        
         try {
             stmt.executeUpdate(
                     "Delete from possede WHERE id_personnel = " + obj.getId());
-            stmt.executeUpdate("Delete from personnel WHERE id = " + obj.getId());
+            System.out.println(stmt.executeUpdate(
+                    "Delete from personnel WHERE id = " + obj.getId()) + " personnels deleted.");
         } catch (SQLException e) {
             e.printStackTrace();
             return;

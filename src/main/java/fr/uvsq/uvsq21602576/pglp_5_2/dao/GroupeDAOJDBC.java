@@ -89,12 +89,22 @@ public class GroupeDAOJDBC extends DAO<Groupe> {
             Composant c = ite.next();
             if (c instanceof Personnel) {
                 Personnel p = (Personnel) c;
-                PersonnelDAOJDBC.insert(p, conn);
+                ResultSet rs = stmt.executeQuery("SELECT * FROM personnel WHERE id = " + p.getId());
+                if(!rs.next()) {
+                    PersonnelDAOJDBC.insert(p, conn);
+                } else {
+                    System.err.println("Personnel " + p.getId() + " not insert : already exists.");
+                }
                 stmt.executeUpdate("insert into appartenir values "
                         + "(" + p.getId() + ", " + obj.getId() + ")");
             } else if (c instanceof Groupe) {
                 Groupe g = (Groupe) c;
-                GroupeDAOJDBC.insert(g, conn);
+                ResultSet rs = stmt.executeQuery("SELECT * FROM groupe WHERE id = " + g.getId());
+                if(!rs.next()) {
+                    GroupeDAOJDBC.insert(g, conn);
+                } else {
+                    System.err.println("Groupe " + g.getId() + " not insert : already exists.");
+                }
                 stmt.executeUpdate("insert into contenir values "
                         + "(" + g.getId() + ", " + obj.getId() + ")");
             }
@@ -169,9 +179,23 @@ public class GroupeDAOJDBC extends DAO<Groupe> {
         return null;
     }
 
-    static void modify(Groupe obj, Connection conn) throws SQLException {
+    static void insertWithUpdate(Groupe obj, Connection conn) {
+
+    }
+
+    static boolean modify(Groupe obj, Connection conn, boolean insert) throws SQLException {
         Statement stmt = null;
         stmt = conn.createStatement();
+
+        ResultSet rs = stmt.executeQuery("SELECT * FROM groupe WHERE id = " + obj.getId());
+        if(!rs.next()) {
+            if(insert) {
+                stmt.executeUpdate("insert into groupe values (" + obj.getId()
+                + ", '" + obj.getNom() + "')");
+            } else {
+                return false;
+            }
+        }
 
         stmt.executeUpdate("UPDATE groupe SET nom = '" + obj.getNom() + "' WHERE id = " + obj.getId());
 
@@ -183,25 +207,26 @@ public class GroupeDAOJDBC extends DAO<Groupe> {
             Composant c = ite.next();
             if (c instanceof Personnel) {
                 Personnel p = (Personnel) c;
-                boolean alreadyExistPersonnel = PersonnelDAOJDBC.modify(p, conn);
-                if(alreadyExistPersonnel == false) {
-                    PersonnelDAOJDBC.insert(p, conn);
-                }
+                PersonnelDAOJDBC.modify(p, conn, insert);
                 stmt.executeUpdate("insert into appartenir values "
                         + "(" + p.getId() + ", " + obj.getId() + ")");
             } else if (c instanceof Groupe) {
                 Groupe g = (Groupe) c;
-                GroupeDAOJDBC.modify(g, conn);
+                GroupeDAOJDBC.modify(g, conn, insert);
                 stmt.executeUpdate("insert into contenir values "
                         + "(" + g.getId() + ", " + obj.getId() + ")");
             }
         }
+
+        return true;
     }
 
     @Override
     public Groupe update(Groupe obj) {
         try {
-            modify(obj, connection);
+            if(!modify(obj, connection, false)) {
+                return null;
+            };
             return obj;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -222,12 +247,14 @@ public class GroupeDAOJDBC extends DAO<Groupe> {
         try {
             stmt.executeUpdate("DELETE from appartenir WHERE id_groupe = " + obj.getId());
             stmt.executeUpdate("DELETE from contenir WHERE id_groupe_contenant = " + obj.getId());
+            stmt.executeUpdate("DELETE from contenir WHERE id_groupe_contenu = " + obj.getId());
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        
+
         try {
-            stmt.executeUpdate("DELETE from groupe WHERE id = " + obj.getId());
+            System.out.println(stmt.executeUpdate(
+                    "DELETE from groupe WHERE id = " + obj.getId()) + " groupes deleted.");
         } catch (SQLException e) {
             e.printStackTrace();
             return;

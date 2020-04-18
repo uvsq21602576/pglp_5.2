@@ -120,4 +120,14 @@ public class Annuaire implements Serializable {
     public int getId() {
         return id;
     }
+
+    /**
+     * Retourne la racine.
+     * @return  Composant racine
+     */
+    public Composant getRacine() {
+        return racine;
+    }
+    
+    
 }

@@ -43,7 +43,7 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
      * @return true si ell existe, false sinon
      * @throws SQLException En cas d'erreur de connection avec la BD.
      */
-    private static boolean tableExists(Connection conn) throws SQLException {
+    private static boolean tableExists(String name, Connection conn) throws SQLException {
         DatabaseMetaData dbmd = conn.getMetaData();
         ResultSet rs = dbmd.getTables(null, null, "telephone".toUpperCase(),
                 null);
@@ -56,7 +56,7 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
     static void createTable(Connection conn) throws SQLException {
         Statement stmt = null;
         stmt = conn.createStatement();
-        if (!tableExists(conn)) {
+        if (!tableExists("telephone", conn)) {
             stmt.execute(
                     "Create table telephone (id int primary key, numero varchar(30) unique not null,"
                             + "information varchar(30))");
@@ -99,12 +99,15 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
         stmt = conn.createStatement();
 
         for(Telephone t : list) {
-            int nb = stmt.executeUpdate("Update telephone SET " + "numero = '"
+
+            ResultSet rs = stmt.executeQuery("SELECT * FROM telephone WHERE id = " + t.getId());
+            if(!rs.next()) {
+                insert(t, conn);
+            } else {
+                stmt.executeUpdate("Update telephone SET " + "numero = '"
                     + t.getNumero() + "', " + "information = '"
                     + t.getInformation() + "' " 
                     + "WHERE id = " + t.getId());
-            if(nb<1) {
-                insert(t, conn);
             }
         }
     }
@@ -221,8 +224,16 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
         }
 
         try {
-            stmt.executeUpdate(
-                    "Delete from telephone " + "WHERE id = " + obj.getId());
+            if(tableExists("possede", connection)) {
+                stmt.executeUpdate("DELETE from possede where id_telephone = " + obj.getId());
+            }
+        } catch (SQLException e1) {
+            e1.printStackTrace();
+        }
+
+        try {
+            System.out.println(stmt.executeUpdate(
+                    "Delete from telephone " + "WHERE id = " + obj.getId()) + " telephones deleted.");
         } catch (SQLException e) {
             e.printStackTrace();
             return;

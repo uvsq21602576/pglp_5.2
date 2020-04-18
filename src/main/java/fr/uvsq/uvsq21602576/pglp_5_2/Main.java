@@ -121,6 +121,12 @@ public enum Main {
         Groupe g = new Groupe(1, "G1");
         g.add(p);
         g.add(p2);
+        Groupe gg = new Groupe(2, "GG");
+        Personnel p100 = new Personnel.Builder(100, "1", "1",
+                LocalDate.of(2000, 01, 05),
+                new Telephone(100, "06.0876..", "portable")).build();
+        gg.add(p100);
+        g.add(gg);
         System.out.println("Groupe : " + g.hierarchie());
         DAO<Groupe> dao = FabriqueDAO.getFabriqueDAO(FabriqueDAO.TypeDAO.JDBC).getGroupeDAO();
         dao.create(g);
@@ -139,16 +145,78 @@ public enum Main {
         Groupe g2 = new Groupe(1, "G1modif");
         g2.add(p3);
         g2.add(p4);
+        g2.add(gg);
         System.out.println("Groupe modif : " + g2.hierarchie());
         
         dao.update(g2);
         Groupe g3 = dao.find("1");
         System.out.println("Groupe modif récupéré : " + g3.hierarchie());
         
-        dao.delete(g3);
+        dao.delete(gg);
+        FabriqueDAO.getFabriqueDAO(FabriqueDAO.TypeDAO.JDBC).getPersonnelDAO().delete(p3);
+        FabriqueDAO.getFabriqueDAO(FabriqueDAO.TypeDAO.JDBC).getTelephoneDAO().delete(new Telephone(2, "num", "info"));
         g2 = dao.find("1");
+        /*System.out.println("Delete ? ");
+        System.out.println(g2==null);*/
+        System.out.println("Groupe supp récupéré : " + g2.hierarchie());
+    }
+    
+    public void runJDBCAnnuaire() {
+        Personnel p = new Personnel.Builder(1, "1", "1",
+                LocalDate.of(2000, 01, 05),
+                new Telephone(1, "061...", "portable")).build();
+        Personnel p2 = new Personnel.Builder(2, "1", "2",
+                LocalDate.of(2000, 01, 05),
+                new Telephone(2, "062...", "portable")).build();
+        Personnel p3 = new Personnel.Builder(3, "2", "1",
+                LocalDate.of(2000, 01, 05),
+                new Telephone(3, "063...", "portable")).build();
+        Personnel p4 = new Personnel.Builder(4, "2", "2",
+                LocalDate.of(2000, 01, 05),
+                new Telephone(4, "064...", "portable")).build();
+        Personnel p5 = new Personnel.Builder(5, "3", "1",
+                LocalDate.of(2000, 01, 05),
+                new Telephone(5, "065...", "portable")).build();
+        Personnel p6 = new Personnel.Builder(6, "4", "1",
+                LocalDate.of(2000, 01, 05),
+                new Telephone(6, "066...", "portable")).build();
+
+        Groupe g = new Groupe(1, "G1");
+        g.add(p);
+        g.add(p2);
+        Groupe g2 = new Groupe(2, "G2");
+        g2.add(p3);
+        g2.add(p4);
+        g2.add(g);
+        g2.add(p6);
+        Groupe g3 = new Groupe(3, "G3");
+        g3.add(p5);
+        g3.add(g2);
+
+        Annuaire a = new Annuaire(1, g3);
+        System.out.println("---- Annuaire : " + a.hierachie());
+        
+        DAO<Annuaire> dao = FabriqueDAO.getFabriqueDAO(FabriqueDAO.TypeDAO.JDBC).getAnnuaireDAO();
+        dao.create(a);
+        
+        Annuaire a2 = dao.find("1");
+        System.out.println("---- Annuaire récupéré : " + a2.hierachie());
+        
+        Groupe g4 = new Groupe(4, "G4");
+        g2.add(p);
+        g4.add(g2);
+        Annuaire a3 = new Annuaire(1, g4);
+        System.out.println("---- Annuaire modif : " + a3.hierachie());
+        
+        dao.update(a3);
+        Annuaire a4 = dao.find("1");
+        System.out.println("---- Annuaire modif récupéré : " + a4.hierachie());
+        
+        dao.delete(a4);
+        
+        a2 = dao.find("1");
         System.out.println("Delete ? ");
-        System.out.println(g2==null);
+        System.out.println(a2==null);
     }
 
     /**
@@ -159,6 +227,7 @@ public enum Main {
         //MAIN.run();
         //MAIN.runJDBCTelephone();
         //MAIN.runJDBCPersonnel();
-        MAIN.runJDBCGroupe();
+        //MAIN.runJDBCGroupe();
+        MAIN.runJDBCAnnuaire();
     }
 }
