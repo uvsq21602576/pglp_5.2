@@ -143,16 +143,28 @@ public class PersonnelDAOJDBC extends DAO<Personnel> {
             e.printStackTrace();
             return null;
         }
+        Personnel created = null;
         try {
+            connection.setAutoCommit(false);
             insert(obj, connection);
-        } catch (DerbySQLIntegrityConstraintViolationException e) {
-            System.err.println(e.getMessage());
-            return null;
+            connection.commit();
+            created = obj;
         } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
+            System.err.println(e.getMessage());
+            try {
+                connection.rollback();
+                System.err.println("Insertion of Personnel " + obj.getId() + " has been rolled back.");
+            } catch (SQLException e1) {
+                System.err.println(e1.getMessage());
+            }
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
         }
-        return obj;
+        return created;
     }
 
     /**
@@ -226,7 +238,7 @@ public class PersonnelDAOJDBC extends DAO<Personnel> {
         try {
             return read(Integer.parseInt(id), connection);
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println(e.getMessage());
         }
         return null;
     }
@@ -256,7 +268,7 @@ public class PersonnelDAOJDBC extends DAO<Personnel> {
                         try (PreparedStatement insertPersonnel =
                                 conn.prepareStatement(
                                         "insert into personnel "
-                                        + "values (?, ?, ?, ?, ?)")) {
+                                                + "values (?, ?, ?, ?, ?)")) {
                             insertPersonnel.setInt(1, obj.getId());
                             insertPersonnel.setString(2, obj.getNom());
                             insertPersonnel.setString(3, obj.getPrenom());
@@ -274,7 +286,7 @@ public class PersonnelDAOJDBC extends DAO<Personnel> {
 
         try (PreparedStatement updatePersonnel = conn
                 .prepareStatement("Update personnel SET nom = ?, prenom = ?, "
-                        + "dateNaissance = ?, fonction = ?" + "WHERE id = ?")) {
+                        + "dateNaissance = ?, fonction = ?" + " WHERE id = ?")) {
             updatePersonnel.setInt(5, obj.getId());
             updatePersonnel.setString(1, obj.getNom());
             updatePersonnel.setString(2, obj.getPrenom());
@@ -309,15 +321,29 @@ public class PersonnelDAOJDBC extends DAO<Personnel> {
      */
     @Override
     public Personnel update(final Personnel obj) {
+        Personnel updated = null;
         try {
-            if (!modify(obj, connection, false)) {
-                return null;
+            connection.setAutoCommit(false);
+            if (modify(obj, connection, false)) {
+                connection.commit();
+                updated = obj;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
+            System.err.println(e.getMessage());
+            try {
+                connection.rollback();
+                System.err.println("Update of Personnel " + obj.getId() + " has been rolled back.");
+            } catch (SQLException e1) {
+                System.err.println(e1.getMessage());
+            }
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
         }
-        return obj;
+        return updated;
     }
 
     /**
@@ -328,64 +354,59 @@ public class PersonnelDAOJDBC extends DAO<Personnel> {
      */
     @Override
     public void delete(final Personnel obj) {
-
         try {
+            connection.setAutoCommit(false);
             if (tableExists("appartenir", connection)) {
                 try (PreparedStatement deleteAppartenir =
                         connection.prepareStatement(
                                 "DELETE from appartenir "
-                                + "where id_personnel = ?")) {
+                                        + "where id_personnel = ?")) {
                     deleteAppartenir.setInt(1, obj.getId());
                     deleteAppartenir.execute();
+                    System.out.println(
+                            "Appartenir with personnel " + obj.getId() + " deleted.");
                 }
             }
-            System.out.println(
-                    "Appartenir with personnel " + obj.getId() + " deleted.");
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.err.println("Personnel not deleted.");
-            return;
-        }
 
-        try (PreparedStatement deletePossede = connection.prepareStatement(
-                "Delete from possede WHERE id_personnel = ?")) {
-            deletePossede.setInt(1, obj.getId());
-            deletePossede.execute();
-            System.out.println(
-                    "Possede with personnel " + obj.getId() + " deleted.");
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.err.println("Personnel not deleted.");
-            return;
-        }
-
-        try {
+            try (PreparedStatement deletePossede = connection.prepareStatement(
+                    "Delete from possede WHERE id_personnel = ?")) {
+                deletePossede.setInt(1, obj.getId());
+                deletePossede.execute();
+                System.out.println(
+                        "Possede with personnel " + obj.getId() + " deleted.");
+            }
             if (tableExists("Annuaire", connection)) {
                 try (PreparedStatement deleteAnnuaire =
                         connection.prepareStatement(
                                 "DELETE from annuaire "
-                                + "where racine_personnel = ?")) {
+                                        + "where racine_personnel = ?")) {
                     deleteAnnuaire.setInt(1, obj.getId());
                     deleteAnnuaire.execute();
                     System.out.println("Annuaire with personnel " + obj.getId()
-                            + " deleted.");
+                    + " deleted.");
                 }
             }
+            try (PreparedStatement deletePersonnel = connection
+                    .prepareStatement("DELETE from personnel where id = ?")) {
+                deletePersonnel.setInt(1, obj.getId());
+                deletePersonnel.execute();
+            }
+            connection.commit();
+            System.out.println("Personnel deleted.");
         } catch (SQLException e) {
-            e.printStackTrace();
-            System.err.println("Personnel not deleted.");
-            return;
+            System.err.println(e.getMessage());
+            try {
+                connection.rollback();
+                System.err.println("Deletion of Personnel " + obj.getId() + " has been rolled back.");
+            } catch (SQLException e1) {
+                System.err.println(e1.getMessage());
+            }
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
         }
-
-        try (PreparedStatement deletePersonnel = connection
-                .prepareStatement("DELETE from personnel where id = ?")) {
-            deletePersonnel.setInt(1, obj.getId());
-            deletePersonnel.execute();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.err.println("Personnel not deleted.");
-            return;
-        }
-        System.out.println("Personnel deleted.");
     }
 }

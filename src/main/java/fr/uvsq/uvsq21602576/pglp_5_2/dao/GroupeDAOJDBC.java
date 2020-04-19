@@ -179,18 +179,29 @@ public class GroupeDAOJDBC extends DAO<Groupe> {
             e.printStackTrace();
             return null;
         }
-
+        Groupe created = null;
         try {
+            connection.setAutoCommit(false);
             insert(obj, connection);
-        } catch (DerbySQLIntegrityConstraintViolationException e) {
-            System.err.println(e.getMessage());
-            return null;
+            connection.commit();
+            created = obj;
         } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
+            System.err.println(e.getMessage());
+            try {
+                connection.rollback();
+                System.err.println("Insertion of Groupe " + obj.getId() + " has been rolled back.");
+            } catch (SQLException e1) {
+                System.err.println(e1.getMessage());
+            }
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
         }
 
-        return null;
+        return obj;
     }
 
     /**
@@ -258,7 +269,7 @@ public class GroupeDAOJDBC extends DAO<Groupe> {
         try {
             return GroupeDAOJDBC.read(Integer.parseInt(id), connection);
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println(e.getMessage());
         }
         return null;
     }
@@ -350,15 +361,28 @@ public class GroupeDAOJDBC extends DAO<Groupe> {
      */
     @Override
     public Groupe update(final Groupe obj) {
+        Groupe updated = null;
         try {
-            if (!modify(obj, connection, false)) {
-                return null;
+            connection.setAutoCommit(false);
+            if (modify(obj, connection, false)) {
+                updated = obj;
             }
-            return obj;
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println(e.getMessage());
+            try {
+                connection.rollback();
+                System.err.println("Update of Groupe " + obj.getId() + " has been rolled back.");
+            } catch (SQLException e1) {
+                System.err.println(e1.getMessage());
+            }
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
         }
-        return null;
+        return updated;
     }
 
     /**
@@ -369,59 +393,59 @@ public class GroupeDAOJDBC extends DAO<Groupe> {
      */
     @Override
     public void delete(final Groupe obj) {
-        try (PreparedStatement deleteAppartenir = connection.prepareStatement(
-                "DELETE from appartenir WHERE id_groupe = ?")) {
-            deleteAppartenir.setInt(1, obj.getId());
-            deleteAppartenir.execute();
-            System.out.println(
-                    "Appartenir with groupe " + obj.getId() + " deleted.");
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.err.println("Groupe not deleted.");
-            return;
-        }
-        try (PreparedStatement deleteContenir = connection.prepareStatement(
-                "DELETE from contenir WHERE id_groupe_contenu = ?"
-                        + " OR id_groupe_contenant = ?")) {
-            deleteContenir.setInt(1, obj.getId());
-            deleteContenir.setInt(2, obj.getId());
-            deleteContenir.execute();
-            System.out.println(
-                    "Contenir with groupe "
-                            + obj.getId() + " deleted.");
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.err.println("Groupe not deleted.");
-            return;
-        }
         try {
+            connection.setAutoCommit(false);
+            try (PreparedStatement deleteAppartenir = connection.prepareStatement(
+                    "DELETE from appartenir WHERE id_groupe = ?")) {
+                deleteAppartenir.setInt(1, obj.getId());
+                deleteAppartenir.execute();
+                System.out.println(
+                        "Appartenir with groupe " + obj.getId() + " deleted.");
+            } 
+            try (PreparedStatement deleteContenir = connection.prepareStatement(
+                    "DELETE from contenir WHERE id_groupe_contenu = ?"
+                            + " OR id_groupe_contenant = ?")) {
+                deleteContenir.setInt(1, obj.getId());
+                deleteContenir.setInt(2, obj.getId());
+                deleteContenir.execute();
+                System.out.println(
+                        "Contenir with groupe "
+                                + obj.getId() + " deleted.");
+            }
             if (tableExists("Annuaire", connection)) {
                 try (PreparedStatement deleteAnnuaire =
                         connection.prepareStatement(
                                 "DELETE FROM Annuaire "
-                                + "WHERE racine_groupe = ?")) {
+                                        + "WHERE racine_groupe = ?")) {
                     deleteAnnuaire.setInt(1, obj.getId());
                     deleteAnnuaire.execute();
                 }
             }
             System.out.println(
                     "Annuaire with groupe " + obj.getId() + " deleted.");
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.err.println("Groupe not deleted.");
-            return;
-        }
 
-        try (PreparedStatement deleteGroupe = connection
-                .prepareStatement("DELETE from groupe WHERE id = ?")) {
-            deleteGroupe.setInt(1, obj.getId());
-            deleteGroupe.execute();
+            try (PreparedStatement deleteGroupe = connection
+                    .prepareStatement("DELETE from groupe WHERE id = ?")) {
+                deleteGroupe.setInt(1, obj.getId());
+                deleteGroupe.execute();
+            }
+            connection.commit();
+            System.out.println("Groupe " + obj.getId() + " deleted.");
         } catch (SQLException e) {
-            e.printStackTrace();
-            System.err.println("Groupe not deleted.");
-            return;
+            System.err.println(e.getMessage());
+            try {
+                connection.rollback();
+                System.err.println("Deletion of Groupe " + obj.getId() + " has been rolled back.");
+            } catch (SQLException e1) {
+                System.err.println(e1.getMessage());
+            }
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
         }
-        System.out.println("Groupe " + obj.getId() + " deleted.");
     }
 
 }

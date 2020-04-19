@@ -101,52 +101,68 @@ public class AnnuaireDAOJDBC extends DAO<Annuaire> {
             e.printStackTrace();
             return null;
         }
-
-        try (PreparedStatement insertAnnuaire = connection.prepareStatement(
-                "INSERT into annuaire values " + "(?, ?, ?)")) {
-            insertAnnuaire.setInt(1, obj.getId());
-            Composant racine = obj.getRacine();
-            if (racine instanceof Personnel) {
-                Personnel p = (Personnel) racine;
-                try (PreparedStatement selectPersonnel =
-                        connection.prepareStatement(
-                                "SELECT * FROM personnel WHERE id = ?")) {
-                    selectPersonnel.setInt(1, p.getId());
-                    try (ResultSet rs = selectPersonnel.executeQuery()) {
-                        if (!rs.next()) {
-                            PersonnelDAOJDBC.insert(p, connection);
-                        } else {
-                            System.err.println("Personnel " + p.getId()
-                                    + " not insert : already exists.");
+        Annuaire created = null;
+        try {
+            connection.setAutoCommit(false);
+            try (PreparedStatement insertAnnuaire = connection.prepareStatement(
+                    "INSERT into annuaire values " + "(?, ?, ?)")) {
+                insertAnnuaire.setInt(1, obj.getId());
+                Composant racine = obj.getRacine();
+                if (racine instanceof Personnel) {
+                    Personnel p = (Personnel) racine;
+                    try (PreparedStatement selectPersonnel =
+                            connection.prepareStatement(
+                                    "SELECT * FROM personnel WHERE id = ?")) {
+                        selectPersonnel.setInt(1, p.getId());
+                        try (ResultSet rs = selectPersonnel.executeQuery()) {
+                            if (!rs.next()) {
+                                PersonnelDAOJDBC.insert(p, connection);
+                            } else {
+                                System.err.println("Personnel " + p.getId()
+                                + " not insert : already exists.");
+                            }
                         }
                     }
-                }
-                insertAnnuaire.setNull(3, Types.INTEGER);
-                insertAnnuaire.setInt(2, p.getId());
-            } else if (racine instanceof Groupe) {
-                Groupe g = (Groupe) racine;
-                try (PreparedStatement selectGroupe =
-                        connection.prepareStatement(
-                                "SELECT * FROM groupe WHERE id = ?")) {
-                    selectGroupe.setInt(1, g.getId());
-                    try (ResultSet rs = selectGroupe.executeQuery()) {
-                        if (!rs.next()) {
-                            GroupeDAOJDBC.insert(g, connection);
-                        } else {
-                            System.err.println("Groupe " + g.getId()
-                                    + " not insert : already exists.");
+                    insertAnnuaire.setNull(3, Types.INTEGER);
+                    insertAnnuaire.setInt(2, p.getId());
+                } else if (racine instanceof Groupe) {
+                    Groupe g = (Groupe) racine;
+                    try (PreparedStatement selectGroupe =
+                            connection.prepareStatement(
+                                    "SELECT * FROM groupe WHERE id = ?")) {
+                        selectGroupe.setInt(1, g.getId());
+                        try (ResultSet rs = selectGroupe.executeQuery()) {
+                            if (!rs.next()) {
+                                GroupeDAOJDBC.insert(g, connection);
+                            } else {
+                                System.err.println("Groupe " + g.getId()
+                                + " not insert : already exists.");
+                            }
                         }
                     }
+                    insertAnnuaire.setNull(2, Types.INTEGER);
+                    insertAnnuaire.setInt(3, g.getId());
                 }
-                insertAnnuaire.setNull(2, Types.INTEGER);
-                insertAnnuaire.setInt(3, g.getId());
+                insertAnnuaire.execute();
+                connection.commit();
+                created = obj;
             }
-            insertAnnuaire.execute();
         } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
+            System.err.println(e.getMessage());
+            try {
+                connection.rollback();
+                System.err.println("Insertion of Annuaire " + obj.getId() + " has been rolled back.");
+            } catch (SQLException e1) {
+                System.err.println(e1.getMessage());
+            }
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
         }
-        return obj;
+        return created;
     }
 
     /**
@@ -182,7 +198,7 @@ public class AnnuaireDAOJDBC extends DAO<Annuaire> {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println(e.getMessage());
         }
         return a;
     }
@@ -196,28 +212,45 @@ public class AnnuaireDAOJDBC extends DAO<Annuaire> {
      */
     @Override
     public Annuaire update(final Annuaire obj) {
-        try (PreparedStatement updateAnnuaire = connection.prepareStatement(
-                "UPDATE annuaire SET racine_groupe = ?, racine_personnel = ? "
-                        + "WHERE id = ?")) {
-            updateAnnuaire.setInt(3, obj.getId());
-            Composant racine = obj.getRacine();
-            if (racine instanceof Personnel) {
-                Personnel p = (Personnel) racine;
-                PersonnelDAOJDBC.modify(p, connection, true);
-                updateAnnuaire.setNull(1, Types.INTEGER);
-                updateAnnuaire.setInt(2, p.getId());
-            } else if (racine instanceof Groupe) {
-                Groupe g = (Groupe) racine;
-                GroupeDAOJDBC.modify(g, connection, true);
-                updateAnnuaire.setNull(2, Types.INTEGER);
-                updateAnnuaire.setInt(1, g.getId());
+        Annuaire updated = null;
+        try {
+            connection.setAutoCommit(false);
+            try (PreparedStatement updateAnnuaire = connection.prepareStatement(
+                    "UPDATE annuaire SET racine_groupe = ?, racine_personnel = ? "
+                            + "WHERE id = ?")) {
+                updateAnnuaire.setInt(3, obj.getId());
+                Composant racine = obj.getRacine();
+                if (racine instanceof Personnel) {
+                    Personnel p = (Personnel) racine;
+                    PersonnelDAOJDBC.modify(p, connection, true);
+                    updateAnnuaire.setNull(1, Types.INTEGER);
+                    updateAnnuaire.setInt(2, p.getId());
+                } else if (racine instanceof Groupe) {
+                    Groupe g = (Groupe) racine;
+                    GroupeDAOJDBC.modify(g, connection, true);
+                    updateAnnuaire.setNull(2, Types.INTEGER);
+                    updateAnnuaire.setInt(1, g.getId());
+                }
+                updateAnnuaire.execute();
+                connection.commit();
+                updated = obj;
             }
-            updateAnnuaire.execute();
-            return obj;
         } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
+            System.err.println(e.getMessage());
+            try {
+                connection.rollback();
+                System.err.println("Update of Annuaire " + obj.getId() + " has been rolled back.");
+            } catch (SQLException e1) {
+                System.err.println(e1.getMessage());
+            }
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
         }
+        return updated;
     }
 
     /**
@@ -228,14 +261,29 @@ public class AnnuaireDAOJDBC extends DAO<Annuaire> {
      */
     @Override
     public void delete(final Annuaire obj) {
-        try (PreparedStatement delete = connection
-                .prepareStatement("DELETE FROM annuaire WHERE id = ?")) {
-            delete.setInt(1, obj.getId());
-            delete.execute();
-            System.out.println("Annuaire deleted.");
+        try {
+            connection.setAutoCommit(false);
+            try (PreparedStatement delete = connection
+                    .prepareStatement("DELETE FROM annuaire WHERE id = ?")) {
+                delete.setInt(1, obj.getId());
+                delete.execute();
+                connection.commit();
+                System.out.println("Annuaire deleted.");
+            }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println(e.getMessage());
+            try {
+                connection.rollback();
+                System.err.println("Deletion of Annuaire " + obj.getId() + " has been rolled back.");
+            } catch (SQLException e1) {
+                System.err.println(e1.getMessage());
+            }
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
         }
     }
-
 }

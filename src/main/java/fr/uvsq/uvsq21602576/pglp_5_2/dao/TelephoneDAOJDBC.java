@@ -109,18 +109,32 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
             e.printStackTrace();
             return null;
         }
+        
+        Telephone created = null;
 
         try {
+            connection.setAutoCommit(false);
             insert(obj, connection);
-        } catch (DerbySQLIntegrityConstraintViolationException e) {
-            System.err.println(e.getMessage());
-            return null;
+            connection.commit();
+            created = obj;
         } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
+            System.err.println(e.getMessage());
+            try {
+                connection.rollback();
+                System.err.println("Insertion of Telephones " + obj.getId() + " has been rolled back.");
+            } catch (SQLException e1) {
+                System.err.println(e1.getMessage());
+            }
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
         }
 
-        return obj;
+        return created;
+
     }
 
     /**
@@ -180,7 +194,7 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
                 }
             }
         } catch (SQLException e1) {
-            e1.printStackTrace();
+            System.err.println(e1.getMessage());
         }
         return null;
     }
@@ -197,17 +211,17 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
 
         try (PreparedStatement selectTelephone =
                 conn.prepareStatement("SELECT * FROM telephone WHERE id = ?")) {
-            for (Telephone t : list) {
-                selectTelephone.setInt(1, t.getId());
-                try (ResultSet rs = selectTelephone.executeQuery()) {
-                    if (!rs.next()) {
-                        insert(t, conn);
-                    } else {
-                        try (PreparedStatement updateTelephone =
-                                conn.prepareStatement(
-                                        "Update telephone SET numero = ?,"
-                                                + "information = ?, "
-                                                + "WHERE id = ?")) {
+            try (PreparedStatement updateTelephone =
+                    conn.prepareStatement(
+                            "Update telephone SET numero = ?,"
+                                    + "information = ? "
+                                    + "WHERE id = ?")) {
+                for (Telephone t : list) {
+                    selectTelephone.setInt(1, t.getId());
+                    try (ResultSet rs = selectTelephone.executeQuery()) {
+                        if (!rs.next()) {
+                            insert(t, conn);
+                        } else {
                             updateTelephone.setString(1, t.getNumero());
                             updateTelephone.setString(2, t.getInformation());
                             updateTelephone.setInt(3, t.getId());
@@ -227,6 +241,12 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
      */
     @Override
     public Telephone update(final Telephone obj) {
+        try {
+            connection.setAutoCommit(false);
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        }
+        Telephone updated = null;
         try (PreparedStatement updateTelephone =
                 connection.prepareStatement("Update telephone SET numero = ?,"
                         + "information = ? WHERE id = ?")) {
@@ -234,10 +254,24 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
             updateTelephone.setString(2, obj.getInformation());
             updateTelephone.setInt(3, obj.getId());
             updateTelephone.execute();
+            connection.commit();
+            updated = obj;
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println(e.getMessage());
+            try {
+                connection.rollback();
+                System.err.println("Update of Telephones " + obj.getId() + " has been rolled back.");
+            } catch (SQLException e1) {
+                System.err.println(e1.getMessage());
+            }
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
         }
-        return obj;
+        return updated;
     }
 
     /**
@@ -247,8 +281,8 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
      */
     @Override
     public void delete(final Telephone obj) {
-
         try {
+            connection.setAutoCommit(false);
             if (tableExists("possede", connection)) {
                 try (PreparedStatement deletePossede =
                         connection.prepareStatement(
@@ -256,23 +290,30 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
                     deletePossede.setInt(1, obj.getId());
                     deletePossede.execute();
                     System.out.println("Possede with telephone " + obj.getId()
-                            + " deleted.");
+                    + " deleted.");
                 }
             }
-        } catch (SQLException e1) {
-            e1.printStackTrace();
-            System.out.println("Telephone not deleted");
-            return;
-        }
-        try (PreparedStatement deleteTelephone = connection
-                .prepareStatement("Delete from telephone WHERE id = ?")) {
-            deleteTelephone.setInt(1, obj.getId());
-            deleteTelephone.execute();
+            try (PreparedStatement deleteTelephone = connection
+                    .prepareStatement("Delete from telephone WHERE id = ?")) {
+                deleteTelephone.setInt(1, obj.getId());
+                deleteTelephone.execute();
+            }
+            connection.commit();
+            System.out.println("Telephone " + obj.getId() + " deleted.");
         } catch (SQLException e) {
-            e.printStackTrace();
-            System.out.println("Telephone not deleted");
-            return;
+            System.err.println(e.getMessage());
+            try {
+                connection.rollback();
+                System.err.println("Deletion of Telephones " + obj.getId() + " has been rolled back.");
+            } catch (SQLException e1) {
+                System.err.println(e1.getMessage());
+            }
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                System.err.println(e.getMessage());
+            }
         }
-        System.out.println("Telephone " + obj.getId() + " deleted.");
     }
 }
