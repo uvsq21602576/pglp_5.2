@@ -42,7 +42,9 @@ public class AnnuaireDAOFile extends DAO<Annuaire> {
     public Annuaire create(final Annuaire obj) {
         String chemin = dossier;
         if (!new File(chemin).exists()) {
-            new File(chemin).mkdirs();
+            if (!new File(chemin).mkdirs()) {
+                return null;
+            }
         }
         chemin += obj.getId() + ".ser";
         File f = new File(chemin);
@@ -144,7 +146,11 @@ public class AnnuaireDAOFile extends DAO<Annuaire> {
         if (!obj.equals(a)) {
             return;
         }
-        f.delete();
+        if (f.delete()) {
+            System.out.println("Annuaire supprimé.");
+        } else {
+            System.err.println("Annuaire non supprimé, erreur.");
+        }
     }
 
     /**

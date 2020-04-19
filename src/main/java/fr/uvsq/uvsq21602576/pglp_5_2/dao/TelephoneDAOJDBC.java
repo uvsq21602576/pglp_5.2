@@ -3,6 +3,7 @@ package fr.uvsq.uvsq21602576.pglp_5_2.dao;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -50,10 +51,11 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
     private static boolean tableExists(final String name, final Connection conn)
             throws SQLException {
         DatabaseMetaData dbmd = conn.getMetaData();
-        ResultSet rs =
-                dbmd.getTables(null, null, "telephone".toUpperCase(), null);
-        if (rs.next()) {
-            return true;
+        try (ResultSet rs =
+                dbmd.getTables(null, null, name.toUpperCase(), null)) {
+            if (rs.next()) {
+                return true;
+            }
         }
         return false;
     }
@@ -66,14 +68,12 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
      *         sql.
      */
     static void createTable(final Connection conn) throws SQLException {
-        Statement stmt = null;
-        stmt = conn.createStatement();
-        if (!tableExists("telephone", conn)) {
-            stmt.execute(
-                    "Create table telephone "
-                    + "(id int primary key, "
-                    + "numero varchar(30) unique not null,"
-                            + "information varchar(30))");
+        try (Statement stmt = conn.createStatement()) {
+            if (!tableExists("telephone", conn)) {
+                stmt.execute("Create table telephone " + "(id int primary key, "
+                        + "numero varchar(30) unique not null,"
+                        + "information varchar(30))");
+            }
         }
     }
 
@@ -86,11 +86,13 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
      */
     static void insert(final Telephone obj, final Connection conn)
             throws SQLException {
-        Statement stmt = null;
-        stmt = conn.createStatement();
-        stmt.executeUpdate("insert into telephone values (" + obj.getId()
-                + ", '" + obj.getNumero() + "', '" + obj.getInformation()
-                + "')");
+        try (PreparedStatement insertTelephone = conn
+                .prepareStatement("insert into telephone values (?, ?, ?)")) {
+            insertTelephone.setInt(1, obj.getId());
+            insertTelephone.setString(2, obj.getNumero());
+            insertTelephone.setString(3, obj.getInformation());
+            insertTelephone.execute();
+        }
     }
 
     /**
@@ -132,25 +134,26 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
      */
     static ArrayList<Telephone> findAll(final ArrayList<Integer> id,
             final Connection conn) throws SQLException {
-        Statement stmt = null;
-        stmt = conn.createStatement();
-        ResultSet rs = null;
+
         ArrayList<Telephone> telephones = new ArrayList<Telephone>();
 
-        for (int i : id) {
-            try {
-                rs = stmt.executeQuery(
-                        "SELECT * FROM telephone " + "WHERE id = " + i);
-                if (rs.next()) {
-                    telephones.add(new Telephone(rs.getInt("id"),
-                            rs.getString("numero"),
-                            rs.getString("information")));
+        try (PreparedStatement selectTelephone =
+                conn.prepareStatement("SELECT * FROM telephone WHERE id = ?")) {
+            for (int i : id) {
+                try {
+                    selectTelephone.setInt(1, i);
+                    try (ResultSet rs = selectTelephone.executeQuery()) {
+                        if (rs.next()) {
+                            telephones.add(new Telephone(rs.getInt("id"),
+                                    rs.getString("numero"),
+                                    rs.getString("information")));
+                        }
+                    }
+                } catch (DerbySQLIntegrityConstraintViolationException e) {
+                    System.err.println(e.getMessage());
                 }
-            } catch (DerbySQLIntegrityConstraintViolationException e) {
-                System.err.println(e.getMessage());
             }
         }
-
         return telephones;
     }
 
@@ -163,33 +166,21 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
      */
     @Override
     public Telephone find(final String id) {
-        Statement stmt = null;
-        try {
-            stmt = connection.createStatement();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
-
-        ResultSet rs = null;
-        try {
-            rs = stmt.executeQuery(
-                    "SELECT * FROM telephone " + "WHERE id = " + id);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
-
-        try {
-            if (rs != null && rs.next()) {
-                Telephone t = new Telephone(rs.getInt("id"),
-                        rs.getString("numero"), rs.getString("information"));
-                return t;
-            } else {
-                System.err.println("No telephone found with id " + id);
+        try (PreparedStatement selectTelephone = connection
+                .prepareStatement("SELECT * FROM telephone WHERE id = ?")) {
+            selectTelephone.setInt(1, Integer.parseInt(id));
+            try (ResultSet rs = selectTelephone.executeQuery()) {
+                if (rs != null && rs.next()) {
+                    Telephone t = new Telephone(rs.getInt("id"),
+                            rs.getString("numero"),
+                            rs.getString("information"));
+                    return t;
+                } else {
+                    System.err.println("No telephone found with id " + id);
+                }
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException e1) {
+            e1.printStackTrace();
         }
         return null;
     }
@@ -203,20 +194,27 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
      */
     static void updateAll(final List<Telephone> list, final Connection conn)
             throws SQLException {
-        Statement stmt = null;
-        stmt = conn.createStatement();
 
-        for (Telephone t : list) {
-
-            ResultSet rs = stmt.executeQuery(
-                    "SELECT * FROM telephone WHERE id = " + t.getId());
-            if (!rs.next()) {
-                insert(t, conn);
-            } else {
-                stmt.executeUpdate(
-                        "Update telephone SET " + "numero = '" + t.getNumero()
-                                + "', " + "information = '" + t.getInformation()
-                                + "' " + "WHERE id = " + t.getId());
+        try (PreparedStatement selectTelephone =
+                conn.prepareStatement("SELECT * FROM telephone WHERE id = ?")) {
+            for (Telephone t : list) {
+                selectTelephone.setInt(1, t.getId());
+                try (ResultSet rs = selectTelephone.executeQuery()) {
+                    if (!rs.next()) {
+                        insert(t, conn);
+                    } else {
+                        try (PreparedStatement updateTelephone =
+                                conn.prepareStatement(
+                                        "Update telephone SET numero = ?,"
+                                                + "information = ?, "
+                                                + "WHERE id = ?")) {
+                            updateTelephone.setString(1, t.getNumero());
+                            updateTelephone.setString(2, t.getInformation());
+                            updateTelephone.setInt(3, t.getId());
+                            updateTelephone.execute();
+                        }
+                    }
+                }
             }
         }
     }
@@ -229,23 +227,16 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
      */
     @Override
     public Telephone update(final Telephone obj) {
-        Statement stmt = null;
-        try {
-            stmt = connection.createStatement();
+        try (PreparedStatement updateTelephone =
+                connection.prepareStatement("Update telephone SET numero = ?,"
+                        + "information = ? WHERE id = ?")) {
+            updateTelephone.setString(1, obj.getNumero());
+            updateTelephone.setString(2, obj.getInformation());
+            updateTelephone.setInt(3, obj.getId());
+            updateTelephone.execute();
         } catch (SQLException e) {
             e.printStackTrace();
-            return null;
         }
-
-        try {
-            stmt.executeUpdate("Update telephone SET " + "numero = '"
-                    + obj.getNumero() + "', " + "information = '"
-                    + obj.getInformation() + "'" + "WHERE id = " + obj.getId());
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
-
         return obj;
     }
 
@@ -256,30 +247,32 @@ public class TelephoneDAOJDBC extends DAO<Telephone> {
      */
     @Override
     public void delete(final Telephone obj) {
-        Statement stmt = null;
-        try {
-            stmt = connection.createStatement();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return;
-        }
 
         try {
             if (tableExists("possede", connection)) {
-                stmt.executeUpdate("DELETE from possede where id_telephone = "
-                        + obj.getId());
+                try (PreparedStatement deletePossede =
+                        connection.prepareStatement(
+                                "DELETE from possede where id_telephone = ?")) {
+                    deletePossede.setInt(1, obj.getId());
+                    deletePossede.execute();
+                    System.out.println("Possede with telephone " + obj.getId()
+                            + " deleted.");
+                }
             }
         } catch (SQLException e1) {
             e1.printStackTrace();
-        }
-
-        try {
-            System.out.println(stmt.executeUpdate(
-                    "Delete from telephone " + "WHERE id = " + obj.getId())
-                    + " telephones deleted.");
-        } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println("Telephone not deleted");
             return;
         }
+        try (PreparedStatement deleteTelephone = connection
+                .prepareStatement("Delete from telephone WHERE id = ?")) {
+            deleteTelephone.setInt(1, obj.getId());
+            deleteTelephone.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Telephone not deleted");
+            return;
+        }
+        System.out.println("Telephone " + obj.getId() + " deleted.");
     }
 }

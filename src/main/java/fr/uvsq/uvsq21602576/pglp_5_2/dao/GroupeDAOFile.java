@@ -42,7 +42,9 @@ public class GroupeDAOFile extends DAO<Groupe> {
     public Groupe create(final Groupe obj) {
         String chemin = dossier;
         if (!new File(chemin).exists()) {
-            new File(chemin).mkdirs();
+            if (!new File(chemin).mkdirs()) {
+                return null;
+            }
         }
         chemin += obj.getId() + ".ser";
         File f = new File(chemin);
@@ -94,7 +96,7 @@ public class GroupeDAOFile extends DAO<Groupe> {
         File f;
         f = new File(nomFichier);
         if (!f.exists()) {
-            System.err.println("Telephone non supprimé car inexistant.");
+            System.err.println("Groupe non modifié car inexistant.");
             return null;
         }
         Groupe g;
@@ -128,7 +130,7 @@ public class GroupeDAOFile extends DAO<Groupe> {
         File f;
         f = new File(nomFichier);
         if (!f.exists()) {
-            System.err.println("Personnel non supprimé car inexistant.");
+            System.err.println("Groupe non supprimé car inexistant.");
             return;
         }
         Groupe g;
@@ -144,7 +146,11 @@ public class GroupeDAOFile extends DAO<Groupe> {
         if (!obj.equals(g)) {
             return;
         }
-        f.delete();
+        if (f.delete()) {
+            System.out.println("Groupe supprimé.");
+        } else {
+            System.err.println("Groupe non supprimé, erreur.");
+        }
     }
 
     /**

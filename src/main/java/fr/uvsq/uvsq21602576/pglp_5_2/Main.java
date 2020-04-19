@@ -247,9 +247,9 @@ public enum Main {
      */
     public static void main(final String[] args) {
         // MAIN.run();
-        // MAIN.runJDBCTelephone();
+        MAIN.runJDBCTelephone();
         // MAIN.runJDBCPersonnel();
         // MAIN.runJDBCGroupe();
-        MAIN.runJDBCAnnuaire();
+        // MAIN.runJDBCAnnuaire();
     }
 }

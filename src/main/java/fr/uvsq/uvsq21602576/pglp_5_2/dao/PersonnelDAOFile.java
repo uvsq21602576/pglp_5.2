@@ -42,7 +42,9 @@ public class PersonnelDAOFile extends DAO<Personnel> {
     public Personnel create(final Personnel obj) {
         String chemin = dossier;
         if (!new File(chemin).exists()) {
-            new File(chemin).mkdirs();
+            if (!new File(chemin).mkdirs()) {
+                return null;
+            }
         }
         chemin += obj.getId() + ".ser";
         File f = new File(chemin);
@@ -94,7 +96,7 @@ public class PersonnelDAOFile extends DAO<Personnel> {
         File f;
         f = new File(nomFichier);
         if (!f.exists()) {
-            System.err.println("Personnel non supprimé car inexistant.");
+            System.err.println("Personnel non modifié car inexistant.");
             return null;
         }
         Personnel p;
@@ -128,7 +130,7 @@ public class PersonnelDAOFile extends DAO<Personnel> {
         File f;
         f = new File(nomFichier);
         if (!f.exists()) {
-            System.err.println("Telephone non supprimé car inexistant.");
+            System.err.println("Personnel non supprimé car inexistant.");
             return;
         }
         Personnel p;
@@ -144,7 +146,11 @@ public class PersonnelDAOFile extends DAO<Personnel> {
         if (!obj.equals(p)) {
             return;
         }
-        f.delete();
+        if (f.delete()) {
+            System.out.println("Personnel supprimé.");
+        } else {
+            System.err.println("Personnel non supprimé, erreur.");
+        }
     }
 
     /**

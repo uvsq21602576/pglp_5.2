@@ -42,7 +42,9 @@ public class TelephoneDAOFile extends DAO<Telephone> {
     public Telephone create(final Telephone obj) {
         String chemin = dossier;
         if (!new File(chemin).exists()) {
-            new File(chemin).mkdirs();
+            if (!new File(chemin).mkdirs()) {
+                return null;
+            }
         }
         chemin += obj.getId() + ".ser";
         File f = new File(chemin);
@@ -94,7 +96,7 @@ public class TelephoneDAOFile extends DAO<Telephone> {
         File f;
         f = new File(nomFichier);
         if (!f.exists()) {
-            System.err.println("Telephone non supprimé car inexistant.");
+            System.err.println("Telephone non modifié car inexistant.");
             return null;
         }
         Telephone t;
@@ -144,7 +146,11 @@ public class TelephoneDAOFile extends DAO<Telephone> {
         if (!obj.equals(t)) {
             return;
         }
-        f.delete();
+        if (f.delete()) {
+            System.out.println("Telephone supprimé.");
+        } else {
+            System.err.println("Telephone non supprimé, erreur.");
+        }
     }
 
     /**
